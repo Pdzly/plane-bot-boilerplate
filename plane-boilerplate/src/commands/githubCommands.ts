@@ -32,6 +32,13 @@ export class GithubCommands {
       type: ApplicationCommandOptionType.String,
     })
     filter: string | undefined,
+    @SlashOption({
+      description: "Make it non Empheral to show someone something",
+      name: "public",
+      type: ApplicationCommandOptionType.Boolean,
+      required: false,
+    })
+    open: boolean | undefined,
     interaction: CommandInteraction
   ): Promise<void> {
     await interaction.deferReply();
@@ -98,6 +105,7 @@ export class GithubCommands {
         const pagination = new Pagination(interaction, pages, {
           type: PaginationType.Button,
           time: 120000,
+          ephemeral: open !== true
         });
         await pagination.send();
       }
@@ -128,6 +136,13 @@ export class GithubCommands {
       type: ApplicationCommandOptionType.String,
     })
     filter: string | undefined,
+    @SlashOption({
+      description: "Make it non Empheral to show someone something",
+      name: "public",
+      type: ApplicationCommandOptionType.Boolean,
+      required: false,
+    })
+    open: boolean | undefined,
     interaction: CommandInteraction
   ): Promise<void> {
     await interaction.deferReply();
@@ -188,6 +203,7 @@ export class GithubCommands {
           const pagination = new Pagination(interaction, pages, {
             type: PaginationType.Button,
             time: 120000,
+            ephemeral: open !== true
           });
           await pagination.send();
         }
