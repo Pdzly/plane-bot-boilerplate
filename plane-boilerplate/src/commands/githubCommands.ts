@@ -80,8 +80,8 @@ export class GithubCommands {
 `,
             ""
           );
-          if (body && body.length > 100) {
-            body = body.substring(0, 100) + "...";
+          if (body ) {
+            body = body.substring(0, 500) + (body.length > 500 && "..." || "");
           } else {
             body = "No description available";
           }
