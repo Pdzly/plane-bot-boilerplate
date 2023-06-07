@@ -99,7 +99,7 @@ export class GithubCommands {
                 name: "Short Description",
                 value: body,
               })
-              .setFooter({ text: `PR #${issue.number} | ${issue.state}` })
+              .setFooter({ text: `Issue #${issue.number} | ${issue.state}` })
           );
           pages.push({ embeds: embeds });
 
