@@ -15,7 +15,7 @@ export class GithubCommands {
 
   @Slash({
     description: "Get details about an Issues from the repo",
-    name: "issue",
+    name: "getissue",
   })
   async issue(
     @SlashOption({
@@ -191,7 +191,7 @@ export class GithubCommands {
 
   @Slash({
     description: "Get details about one Pull Request from the repo",
-    name: "getonepullrequest",
+    name: "getpullrequest",
   })
   async pr(
     @SlashOption({
