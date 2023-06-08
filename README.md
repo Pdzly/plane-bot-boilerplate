@@ -6,6 +6,7 @@ Note: Github token is NOT required but it increases rate limits!
 
 # Features:
 
+- See details about an Issue/Pull Request
 - List all Issues / Feature Requests
     - Filter Issues
     - Search for open / closed / all Issues
