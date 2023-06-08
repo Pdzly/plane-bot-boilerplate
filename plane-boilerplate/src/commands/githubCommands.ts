@@ -1,8 +1,12 @@
 import { Pagination, PaginationType } from "@discordx/pagination";
-import { ApplicationCommandOptionType, CommandInteraction } from "discord.js";
+import {
+  APIEmbedField,
+  ApplicationCommandOptionType,
+  CommandInteraction,
+} from "discord.js";
 import { EmbedBuilder } from "discord.js";
 import { Discord, Slash, SlashChoice, SlashGroup, SlashOption } from "discordx";
-import { Octokit, App } from "octokit";
+import { Octokit } from "octokit";
 
 @Discord()
 @SlashGroup({ name: "github", description: "Github related commands" })
@@ -11,6 +15,105 @@ export class GithubCommands {
   octokit: Octokit = new Octokit(
     (process.env.GITHUB_TOKEN && { auth: process.env.GITHUB_TOKEN }) || {}
   );
+
+  @Slash({
+    description: "Get details about an Issues from the repo",
+    name: "issue",
+  })
+  async issue(
+    @SlashOption({
+      description: "Issue Number",
+      name: "number",
+      required: true,
+      type: ApplicationCommandOptionType.Number,
+    })
+    issueNumber: number,
+    @SlashOption({
+      description: "Make it non Empheral to show someone something",
+      name: "public",
+      type: ApplicationCommandOptionType.Boolean,
+      required: false,
+    })
+    open: boolean | undefined,
+    interaction: CommandInteraction
+  ): Promise<void> {
+    await interaction.deferReply({
+      ephemeral: !open,
+    });
+    const issue = await this.octokit.request(
+      "GET /repos/{owner}/{repo}/issues/{issue_number}",
+      {
+        owner: "makeplane",
+        repo: "plane",
+        issue_number: issueNumber,
+        headers: {
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+      }
+    );
+    if (!issue) {
+      interaction.editReply("No issue found");
+      return;
+    }
+    const fields: APIEmbedField[] = [];
+    fields.push(
+      { name: "State", value: issue.data.state, inline: true },
+      {
+        name: "Labels",
+        value:
+          issue.data.labels
+            .map((label) => (typeof label === "string" ? label : label.name))
+            .join(",\n ") || "No labels",
+        inline: true,
+      }
+    );
+    if (issue.data.assignees) {
+      fields.push({
+        name: "Assignees",
+        value:
+          issue.data.assignees
+            ?.map((assignee) =>
+              typeof assignee === "string" ? assignee : assignee.login
+            )
+            .join(",\n ") || "No assignees",
+        inline: true,
+      });
+    }
+    let body = issue.data.body;
+    body = body?.replace(
+      `### Is there an existing issue for this?
+
+- [X] I have searched the existing issues
+`,
+      ""
+    );
+    fields.push({
+      name: "Description",
+      value:
+        (body &&
+          (body.length > 1024 ? body.substring(0, 1020) + "..." : body)) ||
+        "No description available",
+    });
+    fields.push({
+      name: "Comments",
+      value: `${issue.data.comments} comments`,
+      inline: true,
+    });
+    const embed = new EmbedBuilder()
+      .setTitle(issue.data.title)
+      .setURL(issue.data.html_url)
+      .setAuthor({
+        name: issue.data.user?.login || "Unknown",
+        iconURL: issue.data.user?.avatar_url,
+        url: issue.data.user?.html_url,
+      })
+      .addFields(fields)
+      .setFooter({text: `Issue #${issue.data.number}`})
+      .setTimestamp();
+    interaction.editReply({
+      embeds: [embed],
+    });
+  }
 
   @Slash({
     description: "Get all or filtered Issues from the repo",
@@ -41,7 +144,9 @@ export class GithubCommands {
     open: boolean | undefined,
     interaction: CommandInteraction
   ): Promise<void> {
-    await interaction.deferReply();
+    await interaction.deferReply({
+      ephemeral: !open,
+    });
     try {
       const issues = await this.octokit.request(
         "GET /repos/{owner}/{repo}/issues",
@@ -80,8 +185,9 @@ export class GithubCommands {
 `,
             ""
           );
-          if (body ) {
-            body = body.substring(0, 500) + (body.length > 500 && "..." || "");
+          if (body) {
+            body =
+              body.substring(0, 500) + ((body.length > 500 && "...") || "");
           } else {
             body = "No description available";
           }
@@ -116,11 +222,110 @@ export class GithubCommands {
       interaction.editReply("Something went wrong!");
     }
   }
+
+  @Slash({
+    description: "Get details about one Pull Request from the repo",
+    name: "getonepullrequest",
+  })
+  async pr(
+    @SlashOption({
+      description: "PR Number",
+      name: "number",
+      required: true,
+      type: ApplicationCommandOptionType.Number,
+    })
+    pullRequestNumber: number,
+    @SlashOption({
+      description: "Make it non Empheral to show someone something",
+      name: "public",
+      type: ApplicationCommandOptionType.Boolean,
+      required: false,
+    })
+    open: boolean | undefined,
+    interaction: CommandInteraction
+  ): Promise<void> {
+    await interaction.deferReply({
+      ephemeral: !open,
+    });
+    const pull = await this.octokit.request(
+      "GET /repos/{owner}/{repo}/pulls/{pull_number}",
+      {
+        owner: "makeplane",
+        repo: "plane",
+        pull_number: pullRequestNumber,
+        headers: {
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+      }
+    );
+    if (!pull) {
+      interaction.editReply("No issue found");
+      return;
+    }
+    const fields: APIEmbedField[] = [];
+    fields.push(
+      { name: "State", value: pull.data.state, inline: true },
+      {
+        name: "Labels",
+        value:
+          pull.data.labels
+            .map((label) => (typeof label === "string" ? label : label.name))
+            .join(",\n ") || "No labels",
+        inline: true,
+      }
+    );
+    if (pull.data.assignees) {
+      fields.push({
+        name: "Assignees",
+        value:
+          pull.data.assignees
+            ?.map((assignee) =>
+              typeof assignee === "string" ? assignee : assignee.login
+            )
+            .join(",\n ") || "No assignees",
+        inline: true,
+      });
+    }
+    fields.push({
+      name: "Description",
+      value:
+        (pull.data.body &&
+          (pull.data.body.length > 1024
+            ? pull.data.body.substring(0, 1020) + "..."
+            : pull.data.body)) ||
+        "No description available",
+    });
+    fields.push({
+      name: "Changes",
+      value: `🟢-${pull.data.additions}\n🟠-${pull.data.changed_files}\n🔴-${pull.data.deletions}`,
+      inline: true,
+    });
+    fields.push({
+      name: "Comments",
+      value: `${pull.data.comments} comments`,
+      inline: true,
+    });
+    const embed = new EmbedBuilder()
+      .setTitle(pull.data.title)
+      .setURL(pull.data.html_url)
+      .setAuthor({
+        name: pull.data.user?.login || "Unknown",
+        iconURL: pull.data.user?.avatar_url,
+        url: pull.data.user?.html_url,
+      })
+      .addFields(fields)
+      .setFooter({ text: `PR #${pull.data.number}` })
+      .setTimestamp();
+    interaction.editReply({
+      embeds: [embed],
+    });
+  }
+
   @Slash({
     description: "Get all or filtered Pull Request from the repo",
-    name: "pr",
+    name: "pullrequest",
   })
-  async pullrequest(
+  async pullrequests(
     @SlashChoice("open", "closed", "all")
     @SlashOption({
       description: "State",
