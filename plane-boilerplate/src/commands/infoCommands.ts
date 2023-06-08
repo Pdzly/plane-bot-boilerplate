@@ -1,18 +1,11 @@
 import {
-  EmbedBuilder,
   type CommandInteraction,
-  type Message,
   ApplicationCommandOptionType,
 } from "discord.js";
-import type { SimpleCommandMessage } from "discordx";
 import {
   Discord,
-  SimpleCommand,
-  SimpleCommandOption,
-  SimpleCommandOptionType,
   Slash,
   SlashChoice,
-  SlashGroup,
   SlashOption,
 } from "discordx";
 

@@ -14,21 +14,15 @@
   },
   "dependencies": {
     "@discordx/importer": "^1.1.10",
-    "@discordx/koa": "^1.1.2",
     "@discordx/pagination": "^3.4.0",
-    "@koa/router": "^12.0.0",
     "@octokit/rest": "^19.0.11",
     "@octokit/types": "^9.2.3",
     "discord.js": "^14.7.1",
     "discordx": "^11.7.0",
     "dotenv": "^16.1.4",
-    "koa": "^2.14.1",
     "octokit": "^2.0.19"
   },
   "devDependencies": {
-    "@types/koa": "^2.13.5",
-    "@types/koa__router": "^12.0.0",
-    "@types/node": "^18.13.0",
     "nodemon": "^2.0.20",
     "prettier": "^2.8.4",
     "ts-node": "^10.9.1",

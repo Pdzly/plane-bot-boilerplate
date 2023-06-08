@@ -6,7 +6,7 @@ import {
 } from "discord.js";
 import { EmbedBuilder } from "discord.js";
 import { Discord, Slash, SlashChoice, SlashGroup, SlashOption } from "discordx";
-import githubService from "../services/githubService";
+import githubService from "../services/githubService.js";
 @Discord()
 @SlashGroup({ name: "github", description: "Github related commands" })
 @SlashGroup("github")
@@ -152,7 +152,7 @@ export class GithubCommands {
       for (let i = 0; i < issues.data.length / 5; i++) {
         const embeds: EmbedBuilder[] = [];
         for (let j = 0; j < 5; j++) {
-          const issue = issues.data[i * 5 + j];
+          const issue = issues.data[i + j];
           if (!issue) break;
           let body = githubService.cleanseIssueBody(issue.body);
 
@@ -173,16 +173,16 @@ export class GithubCommands {
               })
               .setFooter({ text: `Issue #${issue.number} | ${issue.state}` })
           );
-          pages.push({ embeds: embeds });
-
-          const pagination = new Pagination(interaction, pages, {
-            type: PaginationType.Button,
-            time: 120000,
-            ephemeral: open !== true,
-          });
-          await pagination.send();
         }
+        pages.push({ embeds: embeds });
       }
+
+      const pagination = new Pagination(interaction, pages, {
+        type: PaginationType.Button,
+        time: 120000,
+        ephemeral: !open,
+      });
+      await pagination.send();
     } catch (exception) {
       console.error(exception);
       interaction.editReply("Something went wrong!");
@@ -213,6 +213,7 @@ export class GithubCommands {
     await interaction.deferReply({
       ephemeral: !open,
     });
+
     const pull = await this.githubService.getPullRequest({
       owner: "makeplane",
       repo: "plane",
@@ -309,7 +310,7 @@ export class GithubCommands {
     open: boolean | undefined,
     interaction: CommandInteraction
   ): Promise<void> {
-    await interaction.deferReply();
+    await interaction.deferReply({ ephemeral: true });
     try {
       const pulls = await this.githubService.getPullRequests({
         state: state || "open",
@@ -322,7 +323,6 @@ export class GithubCommands {
         interaction.editReply("No Pull Requests found");
         return;
       }
-      let data = pulls.data;
       if (filter) {
         pulls.data = pulls.data.filter((prs) =>
           prs.title.toLowerCase().includes(filter.toLowerCase())
@@ -354,16 +354,16 @@ export class GithubCommands {
               })
               .setFooter({ text: `PR #${pull.number} | ${pull.state}` })
           );
-          pages.push({ embeds: embeds });
-
-          const pagination = new Pagination(interaction, pages, {
-            type: PaginationType.Button,
-            time: 120000,
-            ephemeral: open !== true,
-          });
-          await pagination.send();
         }
+        pages.push({ embeds: embeds });
       }
+
+      const pagination = new Pagination(interaction, pages, {
+        type: PaginationType.Button,
+        time: 120000,
+        ephemeral: !open,
+      });
+      await pagination.send();
     } catch (exception) {
       console.error(exception);
       interaction.editReply("Something went wrong!");

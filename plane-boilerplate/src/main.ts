@@ -9,9 +9,7 @@ export const bot = new Client({
   // botGuilds: [(client) => client.guilds.cache.map((guild) => guild.id)],
 
   // Discord intents
-  intents: [
-    IntentsBitField.Flags.Guilds,
-  ],
+  intents: [IntentsBitField.Flags.Guilds],
 
   // Debug logs are disabled in silent mode
   silent: false,
@@ -63,7 +61,6 @@ async function run() {
 
   // Log in with your bot token
   await bot.login(process.env.BOT_TOKEN);
-
 }
 
 run();
