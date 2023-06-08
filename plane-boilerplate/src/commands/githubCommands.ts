@@ -6,15 +6,12 @@ import {
 } from "discord.js";
 import { EmbedBuilder } from "discord.js";
 import { Discord, Slash, SlashChoice, SlashGroup, SlashOption } from "discordx";
-import { Octokit } from "octokit";
-
+import githubService from "../services/githubService";
 @Discord()
 @SlashGroup({ name: "github", description: "Github related commands" })
 @SlashGroup("github")
 export class GithubCommands {
-  octokit: Octokit = new Octokit(
-    (process.env.GITHUB_TOKEN && { auth: process.env.GITHUB_TOKEN }) || {}
-  );
+  githubService: githubService = new githubService();
 
   @Slash({
     description: "Get details about an Issues from the repo",
@@ -40,17 +37,12 @@ export class GithubCommands {
     await interaction.deferReply({
       ephemeral: !open,
     });
-    const issue = await this.octokit.request(
-      "GET /repos/{owner}/{repo}/issues/{issue_number}",
-      {
-        owner: "makeplane",
-        repo: "plane",
-        issue_number: issueNumber,
-        headers: {
-          "X-GitHub-Api-Version": "2022-11-28",
-        },
-      }
-    );
+    const issue = await this.githubService.getIssue({
+      issue_number: issueNumber,
+      headers: {
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    });
     if (!issue) {
       interaction.editReply("No issue found");
       return;
@@ -79,14 +71,7 @@ export class GithubCommands {
         inline: true,
       });
     }
-    let body = issue.data.body;
-    body = body?.replace(
-      `### Is there an existing issue for this?
-
-- [X] I have searched the existing issues
-`,
-      ""
-    );
+    let body = githubService.cleanseIssueBody(issue.data.body);
     fields.push({
       name: "Description",
       value:
@@ -102,13 +87,9 @@ export class GithubCommands {
     const embed = new EmbedBuilder()
       .setTitle(issue.data.title)
       .setURL(issue.data.html_url)
-      .setAuthor({
-        name: issue.data.user?.login || "Unknown",
-        iconURL: issue.data.user?.avatar_url,
-        url: issue.data.user?.html_url,
-      })
+      .setAuthor(githubService.getAuthor(issue.data.user))
       .addFields(fields)
-      .setFooter({text: `Issue #${issue.data.number}`})
+      .setFooter({ text: `Issue #${issue.data.number}` })
       .setTimestamp();
     interaction.editReply({
       embeds: [embed],
@@ -147,18 +128,14 @@ export class GithubCommands {
     await interaction.deferReply({
       ephemeral: !open,
     });
+
     try {
-      const issues = await this.octokit.request(
-        "GET /repos/{owner}/{repo}/issues",
-        {
-          owner: "makeplane",
-          repo: "plane",
-          state: state || "open",
-          headers: {
-            "X-GitHub-Api-Version": "2022-11-28",
-          },
-        }
-      );
+      const issues = await this.githubService.getIssues({
+        state: state || "open",
+        headers: {
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+      });
 
       if (!issues) {
         interaction.editReply("No issues found");
@@ -177,30 +154,19 @@ export class GithubCommands {
         for (let j = 0; j < 5; j++) {
           const issue = issues.data[i * 5 + j];
           if (!issue) break;
-          let body = issue.body;
-          body = body?.replace(
-            `### Is there an existing issue for this?
+          let body = githubService.cleanseIssueBody(issue.body);
 
-- [X] I have searched the existing issues
-`,
-            ""
-          );
           if (body) {
             body =
               body.substring(0, 500) + ((body.length > 500 && "...") || "");
           } else {
             body = "No description available";
           }
-
           embeds.push(
             new EmbedBuilder()
               .setTitle(issue.title)
               .setURL(issue.html_url)
-              .setAuthor({
-                name: issue.user?.login || "Unknown",
-                iconURL: issue.user?.avatar_url,
-                url: issue.user?.html_url,
-              })
+              .setAuthor(githubService.getAuthor(issue.user))
               .addFields({
                 name: "Short Description",
                 value: body,
@@ -247,17 +213,14 @@ export class GithubCommands {
     await interaction.deferReply({
       ephemeral: !open,
     });
-    const pull = await this.octokit.request(
-      "GET /repos/{owner}/{repo}/pulls/{pull_number}",
-      {
-        owner: "makeplane",
-        repo: "plane",
-        pull_number: pullRequestNumber,
-        headers: {
-          "X-GitHub-Api-Version": "2022-11-28",
-        },
-      }
-    );
+    const pull = await this.githubService.getPullRequest({
+      owner: "makeplane",
+      repo: "plane",
+      pull_number: pullRequestNumber,
+      headers: {
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+    });
     if (!pull) {
       interaction.editReply("No issue found");
       return;
@@ -308,11 +271,7 @@ export class GithubCommands {
     const embed = new EmbedBuilder()
       .setTitle(pull.data.title)
       .setURL(pull.data.html_url)
-      .setAuthor({
-        name: pull.data.user?.login || "Unknown",
-        iconURL: pull.data.user?.avatar_url,
-        url: pull.data.user?.html_url,
-      })
+      .setAuthor(githubService.getAuthor(pull.data.user))
       .addFields(fields)
       .setFooter({ text: `PR #${pull.data.number}` })
       .setTimestamp();
@@ -352,17 +311,12 @@ export class GithubCommands {
   ): Promise<void> {
     await interaction.deferReply();
     try {
-      const pulls = await this.octokit.request(
-        "GET /repos/{owner}/{repo}/pulls",
-        {
-          owner: "makeplane",
-          repo: "plane",
-          state: state || "open",
-          headers: {
-            "X-GitHub-Api-Version": "2022-11-28",
-          },
-        }
-      );
+      const pulls = await this.githubService.getPullRequests({
+        state: state || "open",
+        headers: {
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+      });
 
       if (!pulls) {
         interaction.editReply("No Pull Requests found");
@@ -393,11 +347,7 @@ export class GithubCommands {
             new EmbedBuilder()
               .setTitle(pull.title)
               .setURL(pull.html_url)
-              .setAuthor({
-                name: pull.user?.login || "Unknown",
-                iconURL: pull.user?.avatar_url,
-                url: pull.user?.html_url,
-              })
+              .setAuthor(githubService.getAuthor(pull.user))
               .addFields({
                 name: "Short Description",
                 value: body,
