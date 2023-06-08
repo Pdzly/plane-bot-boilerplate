@@ -30,8 +30,12 @@ export default class githubService {
     };
   }
 
-  async doRequest(path: string, options: any):Promise<any> {
-    return await this.octokit.request(path, options);
+  async doRequest(path: string, options: any): Promise<any> {
+    return await this.octokit.request(path, {
+      ...options,
+      owner: "makeplane",
+      repo: "plane",
+    });
   }
   async getIssue(
     options: RequestParameters
@@ -40,24 +44,14 @@ export default class githubService {
   > {
     return await this.doRequest(
       "GET /repos/{owner}/{repo}/issues/{issue_number}",
-      {
-        ...options,
-        owner: "makeplane",
-        repo: "plane",
-      }
+      options
     );
   }
 
   async getIssues(
     options: RequestParameters
-  ): Promise<
-    Endpoints["GET /repos/{owner}/{repo}/issues"]["response"]
-  > {
-    return await this.doRequest("GET /repos/{owner}/{repo}/issues", {
-      ...options,
-      owner: "makeplane",
-      repo: "plane",
-    });
+  ): Promise<Endpoints["GET /repos/{owner}/{repo}/issues"]["response"]> {
+    return await this.doRequest("GET /repos/{owner}/{repo}/issues", options);
   }
 
   async getPullRequest(
@@ -65,22 +59,15 @@ export default class githubService {
   ): Promise<
     Endpoints["GET /repos/{owner}/{repo}/pulls/{pull_number}"]["response"]
   > {
-    return await this.doRequest("GET /repos/{owner}/{repo}/pulls/{pull_number}", {
-      ...options,
-      owner: "makeplane",
-      repo: "plane",
-    });
+    return await this.doRequest(
+      "GET /repos/{owner}/{repo}/pulls/{pull_number}",
+      options
+    );
   }
 
   async getPullRequests(
     options: RequestParameters
-  ): Promise<
-    Endpoints["GET /repos/{owner}/{repo}/pulls"]["response"]
-  > {
-    return await this.doRequest("GET /repos/{owner}/{repo}/pulls", {
-      ...options,
-      owner: "makeplane",
-      repo: "plane",
-    });
+  ): Promise<Endpoints["GET /repos/{owner}/{repo}/pulls"]["response"]> {
+    return await this.doRequest("GET /repos/{owner}/{repo}/pulls", options);
   }
 }
