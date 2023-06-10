@@ -3,6 +3,7 @@ import type { Interaction, Message } from "discord.js";
 import { IntentsBitField } from "discord.js";
 import { Client } from "discordx";
 import dotenv from "dotenv";
+import webhookServices from "./services/webhookServices.js";
 dotenv.config();
 export const bot = new Client({
   // To use only guild command
@@ -61,6 +62,9 @@ async function run() {
 
   // Log in with your bot token
   await bot.login(process.env.BOT_TOKEN);
+
+  new webhookServices()
 }
+
 
 run();
