@@ -1,10 +1,17 @@
+import 'reflect-metadata';
 import { dirname, importx } from "@discordx/importer";
+import { Service, Container } from "typedi";
+DIService.engine = typeDiDependencyRegistryEngine
+  .setService(Service)
+  .setInjector(Container);
 import type { Interaction, Message } from "discord.js";
 import { IntentsBitField } from "discord.js";
-import { Client } from "discordx";
+import { Client, DIService, typeDiDependencyRegistryEngine } from "discordx";
 import dotenv from "dotenv";
 import webhookServices from "./services/webhookServices.js";
 dotenv.config();
+
+
 export const bot = new Client({
   // To use only guild command
   // botGuilds: [(client) => client.guilds.cache.map((guild) => guild.id)],
@@ -62,9 +69,7 @@ async function run() {
 
   // Log in with your bot token
   await bot.login(process.env.BOT_TOKEN);
-
-  new webhookServices()
+  Container.get(webhookServices)
 }
-
 
 run();

@@ -6,3 +6,5 @@ services:
     environment:
       - BOT_TOKEN=${BOT_TOKEN}
       - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
+      - WEBHOOK_PORT=${WEBHOOK_PORT}

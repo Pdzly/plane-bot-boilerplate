@@ -2,17 +2,30 @@ import { Pagination, PaginationType } from "@discordx/pagination";
 import {
   APIEmbedField,
   ApplicationCommandOptionType,
+  ButtonInteraction,
   CommandInteraction,
 } from "discord.js";
 import { EmbedBuilder } from "discord.js";
-import { Discord, Slash, SlashChoice, SlashGroup, SlashOption } from "discordx";
+import {
+  ButtonComponent,
+  Discord,
+  Slash,
+  SlashChoice,
+  SlashGroup,
+  SlashOption,
+} from "discordx";
 import githubService from "../services/githubService.js";
+import webhookServices from "../services/webhookServices.js";
+import { Inject } from "typedi";
+
 @Discord()
 @SlashGroup({ name: "github", description: "Github related commands" })
 @SlashGroup("github")
 export class GithubCommands {
-  githubService: githubService = new githubService();
-
+  @Inject()
+  githubService: githubService;
+  @Inject()
+  userSubscriptionService: webhookServices;
   @Slash({
     description: "Get details about an Issues from the repo",
     name: "getissue",
@@ -368,5 +381,111 @@ export class GithubCommands {
       console.error(exception);
       interaction.editReply("Something went wrong!");
     }
+  }
+
+  @Slash({
+    description:
+      "You can get notified when the given issue or pull request is updated or commented",
+    name: "subscribe",
+  })
+  async subscribe(
+    @SlashOption({
+      description: "The Issue or Pull Request Number",
+      name: "id",
+      type: ApplicationCommandOptionType.String,
+      required: true,
+    })
+    id: number,
+    interaction: CommandInteraction
+  ): Promise<void> {
+    await interaction.deferReply({ ephemeral: true });
+    if (
+      !(await this.userSubscriptionService.getUserSubscription(
+        interaction.user.id,
+        id
+      ))
+    ) {
+      await this.userSubscriptionService.addUserSubscription(
+        interaction.user.id,
+        id
+      );
+      interaction.editReply(
+        "Successfully subscribed to the issue/pull request #" + id
+      );
+    } else {
+      interaction.editReply(
+        "You are already subscribed to the issue/pull request #" + id
+      );
+    }
+  }
+
+  @Slash({
+    description:
+      "If you dont want to get updated about the given issue or pull request",
+    name: "unsubscribe",
+  })
+  async unsubscribe(
+    @SlashOption({
+      description: "The Issue or Pull Request Number",
+      name: "id",
+      type: ApplicationCommandOptionType.String,
+      required: true,
+    })
+    id: number,
+    interaction: CommandInteraction
+  ): Promise<void> {
+    await interaction.deferReply({ ephemeral: true });
+    if (
+      await this.userSubscriptionService.getUserSubscription(
+        interaction.user.id,
+        id
+      )
+    ) {
+      await this.userSubscriptionService.unsubscribeUser(
+        interaction.user.id,
+        id
+      );
+      interaction.editReply(
+        "Successfully unsubscribed to the issue/pull request #" + id
+      );
+    } else {
+      interaction.editReply(
+        "You are already unsubscribed to the issue/pull request #" + id
+      );
+    }
+  }
+
+  @ButtonComponent({
+    id: /unsubscribe-(\d+)/,
+  })
+  async unsubscribeButton(interaction: ButtonInteraction) {
+    var data = interaction.customId.split("-");
+    if (!data[1]) {
+      await interaction.deferUpdate();
+      return;
+    }
+    var issueId = Number(data[1]);
+
+    await interaction.deferReply({ ephemeral: true });
+    if (
+      await this.userSubscriptionService.getUserSubscription(
+        interaction.user.id,
+        issueId
+      )
+    ) {
+      await this.userSubscriptionService.unsubscribeUser(
+        interaction.user.id,
+        issueId
+      );
+      interaction.editReply(
+        "Successfully unsubscribed to the issue/pull request #" + issueId
+      );
+    } else {
+      interaction.editReply(
+        "You wasnt subscribed to the issue/pull request #" + issueId
+      );
+    }
+
+    interaction.message.edit({ components: [] });
   }
 }

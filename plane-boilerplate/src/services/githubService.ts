@@ -1,7 +1,9 @@
 import { EmbedAuthorOptions } from "discord.js";
 import { Octokit } from "octokit";
 import { Endpoints, OctokitResponse, RequestParameters } from "@octokit/types";
+import { Service } from "typedi";
 
+@Service()
 export default class githubService {
   octokit: Octokit = new Octokit(
     (process.env.GITHUB_TOKEN && { auth: process.env.GITHUB_TOKEN }) || {}

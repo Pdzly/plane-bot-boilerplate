@@ -10,7 +10,7 @@
 
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-
+    "strictPropertyInitialization": false,
     "forceConsistentCasingInFileNames": true
   },
   "exclude": ["build", "node_modules"]

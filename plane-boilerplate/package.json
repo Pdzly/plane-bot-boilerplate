@@ -12,6 +12,7 @@
     "watch": "nodemon --exec ts-node-esm src/main.ts"
   },
   "dependencies": {
+    "@discordx/di": "^3.1.1",
     "@discordx/importer": "^1.1.10",
     "@discordx/pagination": "^3.4.0",
     "@octokit/rest": "^19.0.11",
@@ -20,7 +21,11 @@
     "discordx": "^11.7.0",
     "dotenv": "^16.1.4",
     "eventsource": "^2.0.2",
-    "octokit": "^2.0.19"
+    "mongodb": "^5.6.0",
+    "octokit": "^2.0.19",
+    "reflect-metadata": "^0.1.13",
+    "typedi": "^0.10.0",
+    "typeorm": "^0.3.16"
   },
   "devDependencies": {
     "@types/eventsource": "^1.1.11",
