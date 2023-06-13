@@ -2,8 +2,6 @@
 
 To run it just rename .env.example to .env and fill out the fields.
 
-Note: Github token is NOT required but it increases rate limits!
-
 # Features:
 
 - See details about an Issue/Pull Request
