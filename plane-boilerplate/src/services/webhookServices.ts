@@ -42,137 +42,33 @@ export default class webhookServices {
     });
 
     this.webhooks.on("issues.opened", async (ev) => {
-      const embed = new EmbedBuilder();
-      embed.setTitle("New Issue: " + ev.payload.issue.title);
-      embed.setURL(ev.payload.issue.html_url);
-      embed.setAuthor({
-        name: ev.payload.sender.login,
-        iconURL: ev.payload.sender.avatar_url,
-        url: ev.payload.sender.html_url,
-      });
-      ev.payload.issue.body =
-        ev.payload.issue.body?.replace(
-          `### Is there an existing issue for this?
+      try {
+        const embed = new EmbedBuilder();
+        embed.setTitle("New Issue: " + ev.payload.issue.title);
+        embed.setURL(ev.payload.issue.html_url);
+        embed.setAuthor({
+          name: ev.payload.sender.login,
+          iconURL: ev.payload.sender.avatar_url,
+          url: ev.payload.sender.html_url,
+        });
+        ev.payload.issue.body =
+          ev.payload.issue.body?.replace(
+            `### Is there an existing issue for this?
             
             - [X] I have searched the existing issues
             `,
-          ""
-        ) || null;
-      embed.setDescription(
-        (ev.payload.issue.body?.length || 0) > 4096
-          ? ev.payload.issue.body?.substring(0, 4092) + "..."
-          : ev.payload.issue.body
-      );
-      if (!this.webhookChannel) return;
-      let channel = (await this.webhookChannel.threads.fetch()).threads.find(
-        (x) => x.name === "Issues" && x.parentId === this.webhookChannel?.id
-      ) as ThreadChannel;
-      if (!channel) {
-        if (this.webhookChannel instanceof ForumChannel) {
-          channel = await this.webhookChannel.threads.create({
-            name: "Issues",
-            message: { content: "Issue Updates will be posted here" },
-          });
-        } else {
-          channel = await this.webhookChannel.threads.create({
-            name: "Issues",
-          });
-        }
-      }
-      if (channel?.archived && channel.unarchivable) {
-        await channel.setArchived(false);
-      }
-      await channel?.send({ embeds: [embed] });
-    });
-
-    this.webhooks.on("issues.closed", async (ev) => {
-      const embed = new EmbedBuilder();
-      embed.setTitle("Closed: " + ev.payload.issue.title);
-      embed.setURL(ev.payload.issue.html_url);
-      embed.setAuthor({
-        name: ev.payload.sender.login,
-        iconURL: ev.payload.sender.avatar_url,
-        url: ev.payload.sender.html_url,
-      });
-
-      if (!this.webhookChannel) return;
-      let channel = (await this.webhookChannel.threads.fetch()).threads.find(
-        (x) => x.name === "Issues" && x.parentId === this.webhookChannel?.id
-      ) as ThreadChannel;
-      if (!channel) {
-        if (this.webhookChannel instanceof ForumChannel) {
-          channel = await this.webhookChannel.threads.create({
-            name: "Issues",
-            message: { content: "Issue Updates will be posted here" },
-          });
-        } else {
-          channel = await this.webhookChannel.threads.create({
-            name: "Issues",
-          });
-        }
-      }
-      if (channel?.archived && channel.unarchivable) {
-        await channel.setArchived(false);
-      }
-      await channel?.send({ embeds: [embed] });
-    });
-    this.webhooks.on("issues.closed", async (ev) => {
-      if (ev.payload.issue.pull_request !== undefined) {
-        this.getUsersForIssue(ev.payload.issue.number).then((x) =>
-          this.handlePullRequestSubscription(x, ev, true)
+            ""
+          ) || null;
+        embed.setDescription(
+          (ev.payload.issue.body?.length || 0) > 4096
+            ? ev.payload.issue.body?.substring(0, 4092) + "..."
+            : ev.payload.issue.body
         );
-      } else {
-        this.getUsersForIssue(ev.payload.issue.number).then((x) =>
-          this.handleIssueSubscription(x, ev, true)
-        );
-      }
-    });
-
-    this.webhooks.on("issue_comment.created", async (ev) => {
-      if (ev.payload.issue.pull_request !== undefined) {
-        this.getUsersForIssue(ev.payload.issue.number).then((x) =>
-          this.handlePullRequestSubscription(x, ev)
-        );
-      } else {
-        this.getUsersForIssue(ev.payload.issue.number).then((x) =>
-          this.handleIssueSubscription(x, ev)
-        );
-      }
-      const embed = new EmbedBuilder();
-      embed.setTitle("Comment to " + ev.payload.issue.title);
-      embed.setURL(ev.payload.issue.html_url);
-
-      embed.setAuthor({
-        name: ev.payload.sender.login,
-        iconURL: ev.payload.sender.avatar_url,
-        url: ev.payload.sender.html_url,
-      });
-      embed.setDescription(
-        (ev.payload.comment.body?.length || 0) > 4096
-          ? ev.payload.comment.body?.substring(0, 4092) + "..."
-          : ev.payload.comment.body
-      );
-
-      if (!this.webhookChannel) return;
-      let channel = (await this.webhookChannel.threads.fetch()).threads.find(
-        (x) =>
-          x.name ===
-            ((ev.payload.issue.pull_request !== undefined && "Pull-Requests") ||
-              "Issues") && x.parentId === this.webhookChannel?.id
-      ) as ThreadChannel;
-      if (!channel) {
-        if (ev.payload.issue.pull_request !== undefined) {
-          if (this.webhookChannel instanceof ForumChannel) {
-            channel = await this.webhookChannel.threads.create({
-              name: "Pull-Requests",
-              message: { content: "Pull Request Updates will be posted here" },
-            });
-          } else {
-            channel = await this.webhookChannel.threads.create({
-              name: "Pull-Requests",
-            });
-          }
-        } else {
+        if (!this.webhookChannel) return;
+        let channel = (await this.webhookChannel.threads.fetch()).threads.find(
+          (x) => x.name === "Issues" && x.parentId === this.webhookChannel?.id
+        ) as ThreadChannel;
+        if (!channel) {
           if (this.webhookChannel instanceof ForumChannel) {
             channel = await this.webhookChannel.threads.create({
               name: "Issues",
@@ -184,99 +80,232 @@ export default class webhookServices {
             });
           }
         }
+        if (channel?.archived && channel.unarchivable) {
+          await channel.setArchived(false);
+        }
+        await channel?.send({ embeds: [embed] });
+      } catch (e) {
+        console.error(e);
       }
+    });
 
-      if (channel.archived && channel.unarchivable) {
-        await channel.setArchived(false);
+    this.webhooks.on("issues.closed", async (ev) => {
+      try {
+        try {
+          if (ev.payload.issue.pull_request !== undefined) {
+            this.getUsersForIssue(ev.payload.issue.number).then((x) =>
+              this.handlePullRequestSubscription(x, ev, true)
+            );
+          } else {
+            this.getUsersForIssue(ev.payload.issue.number).then((x) =>
+              this.handleIssueSubscription(x, ev, true)
+            );
+          }
+        } catch (e) {
+          console.error(e);
+        }
+        const embed = new EmbedBuilder();
+        embed.setTitle("Closed: " + ev.payload.issue.title);
+        embed.setURL(ev.payload.issue.html_url);
+        embed.setAuthor({
+          name: ev.payload.sender.login,
+          iconURL: ev.payload.sender.avatar_url,
+          url: ev.payload.sender.html_url,
+        });
+
+        if (!this.webhookChannel) return;
+        let channel = (await this.webhookChannel.threads.fetch()).threads.find(
+          (x) => x.name === "Issues" && x.parentId === this.webhookChannel?.id
+        ) as ThreadChannel;
+        if (!channel) {
+          if (this.webhookChannel instanceof ForumChannel) {
+            channel = await this.webhookChannel.threads.create({
+              name: "Issues",
+              message: { content: "Issue Updates will be posted here" },
+            });
+          } else {
+            channel = await this.webhookChannel.threads.create({
+              name: "Issues",
+            });
+          }
+        }
+        if (channel?.archived && channel.unarchivable) {
+          await channel.setArchived(false);
+        }
+        await channel?.send({ embeds: [embed] });
+      } catch (e) {
+        console.error(e);
       }
-      await channel.send({ embeds: [embed] });
+    });
+
+    this.webhooks.on("issue_comment.created", async (ev) => {
+      try {
+        try {
+          if (ev.payload.issue.pull_request !== undefined) {
+            this.getUsersForIssue(ev.payload.issue.number).then((x) =>
+              this.handlePullRequestSubscription(x, ev)
+            );
+          } else {
+            this.getUsersForIssue(ev.payload.issue.number).then((x) =>
+              this.handleIssueSubscription(x, ev)
+            );
+          }
+        } catch (e) {
+          console.error(e);
+        }
+        const embed = new EmbedBuilder();
+        embed.setTitle("Comment to " + ev.payload.issue.title);
+        embed.setURL(ev.payload.issue.html_url);
+
+        embed.setAuthor({
+          name: ev.payload.sender.login,
+          iconURL: ev.payload.sender.avatar_url,
+          url: ev.payload.sender.html_url,
+        });
+        embed.setDescription(
+          (ev.payload.comment.body?.length || 0) > 4096
+            ? ev.payload.comment.body?.substring(0, 4092) + "..."
+            : ev.payload.comment.body
+        );
+
+        if (!this.webhookChannel) return;
+        let channel = (await this.webhookChannel.threads.fetch()).threads.find(
+          (x) =>
+            x.name ===
+              ((ev.payload.issue.pull_request !== undefined &&
+                "Pull-Requests") ||
+                "Issues") && x.parentId === this.webhookChannel?.id
+        ) as ThreadChannel;
+        if (!channel) {
+          if (ev.payload.issue.pull_request !== undefined) {
+            if (this.webhookChannel instanceof ForumChannel) {
+              channel = await this.webhookChannel.threads.create({
+                name: "Pull-Requests",
+                message: {
+                  content: "Pull Request Updates will be posted here",
+                },
+              });
+            } else {
+              channel = await this.webhookChannel.threads.create({
+                name: "Pull-Requests",
+              });
+            }
+          } else {
+            if (this.webhookChannel instanceof ForumChannel) {
+              channel = await this.webhookChannel.threads.create({
+                name: "Issues",
+                message: { content: "Issue Updates will be posted here" },
+              });
+            } else {
+              channel = await this.webhookChannel.threads.create({
+                name: "Issues",
+              });
+            }
+          }
+        }
+
+        if (channel.archived && channel.unarchivable) {
+          await channel.setArchived(false);
+        }
+        await channel.send({ embeds: [embed] });
+      } catch (e) {
+        console.error(e);
+      }
     });
 
     this.webhooks.on("pull_request.opened", async (ev) => {
-      const embed = new EmbedBuilder();
-      embed.setTitle("New Pull Request: " + ev.payload.pull_request.title);
-      embed.setURL(ev.payload.pull_request.html_url);
-      embed.setAuthor({
-        name: ev.payload.sender.login,
-        iconURL: ev.payload.sender.avatar_url,
-        url: ev.payload.sender.html_url,
-      });
-      embed.setDescription(
-        (ev.payload.pull_request.body?.length || 0) > 4096
-          ? ev.payload.pull_request.body?.substring(0, 4092) + "..."
-          : ev.payload.pull_request.body
-      );
+      try {
+        const embed = new EmbedBuilder();
+        embed.setTitle("New Pull Request: " + ev.payload.pull_request.title);
+        embed.setURL(ev.payload.pull_request.html_url);
+        embed.setAuthor({
+          name: ev.payload.sender.login,
+          iconURL: ev.payload.sender.avatar_url,
+          url: ev.payload.sender.html_url,
+        });
+        embed.setDescription(
+          (ev.payload.pull_request.body?.length || 0) > 4096
+            ? ev.payload.pull_request.body?.substring(0, 4092) + "..."
+            : ev.payload.pull_request.body
+        );
 
-      embed.setFooter({
-        text: `🟢-${ev.payload.pull_request.additions}\n🟠-${ev.payload.pull_request.changed_files}\n🔴-${ev.payload.pull_request.deletions}`,
-      });
-      if (!this.webhookChannel) return;
+        embed.setFooter({
+          text: `🟢-${ev.payload.pull_request.additions}\n🟠-${ev.payload.pull_request.changed_files}\n🔴-${ev.payload.pull_request.deletions}`,
+        });
+        if (!this.webhookChannel) return;
 
-      let channel = (await this.webhookChannel.threads.fetch()).threads.find(
-        (x) =>
-          x.name === "Pull-Requests" && x.parentId === this.webhookChannel?.id
-      ) as ThreadChannel;
-      if (!channel) {
-        if (this.webhookChannel instanceof ForumChannel) {
-          channel = await this.webhookChannel.threads.create({
-            name: "Pull-Requests",
-            message: { content: "Pull Request Updates will be posted here" },
-          });
-        } else {
-          channel = await this.webhookChannel.threads.create({
-            name: "Pull-Requests",
-          });
+        let channel = (await this.webhookChannel.threads.fetch()).threads.find(
+          (x) =>
+            x.name === "Pull-Requests" && x.parentId === this.webhookChannel?.id
+        ) as ThreadChannel;
+        if (!channel) {
+          if (this.webhookChannel instanceof ForumChannel) {
+            channel = await this.webhookChannel.threads.create({
+              name: "Pull-Requests",
+              message: { content: "Pull Request Updates will be posted here" },
+            });
+          } else {
+            channel = await this.webhookChannel.threads.create({
+              name: "Pull-Requests",
+            });
+          }
         }
+        if (channel?.archived && channel.unarchivable) {
+          await channel.setArchived(false);
+        }
+        await channel?.send({ embeds: [embed] });
+      } catch (e) {
+        console.error(e);
       }
-      if (channel?.archived && channel.unarchivable) {
-        await channel.setArchived(false);
-      }
-      await channel?.send({ embeds: [embed] });
     });
 
     this.webhooks.on("pull_request.closed", async (ev) => {
-      this.getUsersForIssue(ev.payload.pull_request.number).then((x) =>
-        this.handlePullRequestSubscription(x, ev, true)
-      );
+      try {
+        this.getUsersForIssue(ev.payload.pull_request.number).then((x) =>
+          this.handlePullRequestSubscription(x, ev, true)
+        );
 
-      const embed = new EmbedBuilder();
+        const embed = new EmbedBuilder();
 
-      embed.setTitle(
-        (ev.payload.pull_request.merged ? "Merged: " : "Closed: ") +
-          ev.payload.pull_request.title
-      );
-      embed.setURL(ev.payload.pull_request.html_url);
-      embed.setAuthor({
-        name: ev.payload.sender.login,
-        iconURL: ev.payload.sender.avatar_url,
-        url: ev.payload.sender.html_url,
-      });
+        embed.setTitle(
+          (ev.payload.pull_request.merged ? "Merged: " : "Closed: ") +
+            ev.payload.pull_request.title
+        );
+        embed.setURL(ev.payload.pull_request.html_url);
+        embed.setAuthor({
+          name: ev.payload.sender.login,
+          iconURL: ev.payload.sender.avatar_url,
+          url: ev.payload.sender.html_url,
+        });
 
-      embed.setFooter({
-        text: `🟢-${ev.payload.pull_request.additions}\n🟠-${ev.payload.pull_request.changed_files}\n🔴-${ev.payload.pull_request.deletions}`,
-      });
-      if (!this.webhookChannel) return;
+        embed.setFooter({
+          text: `🟢-${ev.payload.pull_request.additions}\n🟠-${ev.payload.pull_request.changed_files}\n🔴-${ev.payload.pull_request.deletions}`,
+        });
+        if (!this.webhookChannel) return;
 
-      let channel = (await this.webhookChannel.threads.fetch()).threads.find(
-        (x) =>
-          x.name === "Pull-Requests" && x.parentId === this.webhookChannel?.id
-      ) as ThreadChannel;
-      if (!channel) {
-        if (this.webhookChannel instanceof ForumChannel) {
-          channel = await this.webhookChannel.threads.create({
-            name: "Pull-Requests",
-            message: { content: "Pull Request Updates will be posted here" },
-          });
-        } else {
-          channel = await this.webhookChannel.threads.create({
-            name: "Pull-Requests",
-          });
+        let channel = (await this.webhookChannel.threads.fetch()).threads.find(
+          (x) =>
+            x.name === "Pull-Requests" && x.parentId === this.webhookChannel?.id
+        ) as ThreadChannel;
+        if (!channel) {
+          if (this.webhookChannel instanceof ForumChannel) {
+            channel = await this.webhookChannel.threads.create({
+              name: "Pull-Requests",
+              message: { content: "Pull Request Updates will be posted here" },
+            });
+          } else {
+            channel = await this.webhookChannel.threads.create({
+              name: "Pull-Requests",
+            });
+          }
         }
+        if (channel?.archived && channel.unarchivable) {
+          await channel.setArchived(false);
+        }
+        await channel?.send({ embeds: [embed] });
+      } catch (e) {
+        console.error(e);
       }
-      if (channel?.archived && channel.unarchivable) {
-        await channel.setArchived(false);
-      }
-      await channel?.send({ embeds: [embed] });
     });
     if (process.env.DEVELOPMENT === "1") {
       const webhookProxyUrl = process.env.WEBHOOK_PROXY_URL!;
@@ -332,7 +361,14 @@ export default class webhookServices {
   ) {
     const dmEmbed = new EmbedBuilder();
     if (closed) {
-      dmEmbed.setTitle("Closed: " + issue.payload.issue.title + " #" + issue.payload.issue.number);
+      dmEmbed.setTitle(
+        "Closed: " +
+          (issue.payload.issue.title.length > 220
+            ? issue.payload.issue.title.substring(0, 220) + "..."
+            : issue.payload.issue.title) +
+          " #" +
+          issue.payload.issue.number
+      );
       dmEmbed.setDescription(
         issue.payload.issue.title +
           " was closed by " +
@@ -344,7 +380,14 @@ export default class webhookServices {
         issue.payload.comment.body
       );
 
-      dmEmbed.setTitle("New Comment to " + issue.payload.issue.title + " #" + issue.payload.issue.number);
+      dmEmbed.setTitle(
+        "New Comment to " +
+          (issue.payload.issue.title.length > 220
+            ? issue.payload.issue.title.substring(0, 220) + "..."
+            : issue.payload.issue.title) +
+          " #" +
+          issue.payload.issue.number
+      );
       dmEmbed.setDescription(
         (issue.payload.comment.body?.length || 0) > 4096
           ? issue.payload.comment.body?.substring(0, 4092) + "..."
@@ -388,7 +431,14 @@ export default class webhookServices {
   ) {
     const dmEmbed = new EmbedBuilder();
     if (closed) {
-      dmEmbed.setTitle("Closed: " + pull_request.payload.pull_request.title + " #" + pull_request.payload.pull_request.number);
+      dmEmbed.setTitle(
+        "Closed: " +
+          (pull_request.payload.pull_request.title.length > 220
+            ? pull_request.payload.pull_request.title.substring(0, 220) + "..."
+            : pull_request.payload.pull_request.title) +
+          " #" +
+          pull_request.payload.pull_request.number
+      );
       dmEmbed.setDescription(
         pull_request.payload.pull_request.title +
           " was closed by " +
@@ -400,7 +450,12 @@ export default class webhookServices {
         pull_request.payload.comment.body
       );
       dmEmbed.setTitle(
-        "New Comment to " + pull_request.payload.pull_request.title + " #" + pull_request.payload.pull_request.number
+        "New Comment to " +
+          (pull_request.payload.pull_request.title.length > 220
+            ? pull_request.payload.pull_request.title.substring(0, 220) + "..."
+            : pull_request.payload.pull_request.title) +
+          " #" +
+          pull_request.payload.pull_request.number
       );
       dmEmbed.setDescription(
         (pull_request.payload.comment.body?.length || 0) > 4096
