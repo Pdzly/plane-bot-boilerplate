@@ -45,6 +45,7 @@ Please Note: This will not retroactively give the role to users that already acc
 You can use \`/patchroles\` to give the role to everyone that accepted the rules. The role should be under the Bots role.`);
     } catch (exc) {
       console.error(exc);
+      await interaction.editReply("Something went wrong.");
     }
   }
 
@@ -83,6 +84,7 @@ You can use \`/patchroles\` to give the role to everyone that accepted the rules
       await interaction.editReply("Done! Updated " + updatedMembers + " members.");
     } catch (exc) {
       console.error(exc);
+      await interaction.editReply("Something went wrong.");
     }
   }
 
@@ -100,7 +102,11 @@ You can use \`/patchroles\` to give the role to everyone that accepted the rules
       return;
     }
     if (!newMember.roles.cache.has(foundRoleId) && oldMember.pending && !newMember.pending) {
-      await newMember.roles.add(foundRole);
+      try{
+        await newMember.roles.add(foundRole);
+      }catch(exc){
+        console.error(exc);
+      }
     }
   }
 }
