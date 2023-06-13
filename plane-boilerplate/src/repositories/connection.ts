@@ -9,8 +9,6 @@ const connection = new DataSource({
     username: process.env.MONGODB_USERNAME,
     password: process.env.MONGODB_PASSWORD,
     entities: [UserSubscription],
-    synchronize: true,
 })
-if(!connection.isInitialized) connection.initialize()
 
 export default connection;

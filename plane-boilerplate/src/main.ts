@@ -1,4 +1,4 @@
-import 'reflect-metadata';
+import "reflect-metadata";
 import { dirname, importx } from "@discordx/importer";
 import { Service, Container } from "typedi";
 DIService.engine = typeDiDependencyRegistryEngine
@@ -9,8 +9,8 @@ import { IntentsBitField } from "discord.js";
 import { Client, DIService, typeDiDependencyRegistryEngine } from "discordx";
 import dotenv from "dotenv";
 import webhookServices from "./services/webhookServices.js";
+import connection from "./repositories/connection.js";
 dotenv.config();
-
 
 export const bot = new Client({
   // To use only guild command
@@ -53,6 +53,10 @@ bot.on("messageCreate", (message: Message) => {
 });
 
 async function run() {
+  await connection.initialize();
+
+  connection.synchronize();
+
   // The following syntax should be used in the commonjs environment
   //
   // await importx(__dirname + "/{events,commands,api}/**/*.{ts,js}");
@@ -69,7 +73,8 @@ async function run() {
 
   // Log in with your bot token
   await bot.login(process.env.BOT_TOKEN);
-  Container.get(webhookServices)
+
+  Container.get(webhookServices);
 }
 
 run();
