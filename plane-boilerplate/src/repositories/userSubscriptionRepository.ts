@@ -17,7 +17,6 @@ export default class UserSubscriptionRepository {
 
   async getUserSubscriptionByIssueId(issueId: number) {
     issueId = Number(issueId);
-    console.log(issueId);
     const userSubscription = await this.repository.find({
       where: {
         issueId: {$eq: issueId},
