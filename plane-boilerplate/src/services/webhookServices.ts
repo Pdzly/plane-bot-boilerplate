@@ -332,7 +332,7 @@ export default class webhookServices {
   ) {
     const dmEmbed = new EmbedBuilder();
     if (closed) {
-      dmEmbed.setTitle("Closed: " + issue.payload.issue.title);
+      dmEmbed.setTitle("Closed: " + issue.payload.issue.title + " #" + issue.payload.issue.number);
       dmEmbed.setDescription(
         issue.payload.issue.title +
           " was closed by " +
@@ -344,7 +344,7 @@ export default class webhookServices {
         issue.payload.comment.body
       );
 
-      dmEmbed.setTitle("New Comment to " + issue.payload.issue.title);
+      dmEmbed.setTitle("New Comment to " + issue.payload.issue.title + " #" + issue.payload.issue.number);
       dmEmbed.setDescription(
         (issue.payload.comment.body?.length || 0) > 4096
           ? issue.payload.comment.body?.substring(0, 4092) + "..."
@@ -388,7 +388,7 @@ export default class webhookServices {
   ) {
     const dmEmbed = new EmbedBuilder();
     if (closed) {
-      dmEmbed.setTitle("Closed: " + pull_request.payload.pull_request.title);
+      dmEmbed.setTitle("Closed: " + pull_request.payload.pull_request.title + " #" + pull_request.payload.pull_request.number);
       dmEmbed.setDescription(
         pull_request.payload.pull_request.title +
           " was closed by " +
@@ -400,7 +400,7 @@ export default class webhookServices {
         pull_request.payload.comment.body
       );
       dmEmbed.setTitle(
-        "New Comment to " + pull_request.payload.pull_request.title
+        "New Comment to " + pull_request.payload.pull_request.title + " #" + pull_request.payload.pull_request.number
       );
       dmEmbed.setDescription(
         (pull_request.payload.comment.body?.length || 0) > 4096
