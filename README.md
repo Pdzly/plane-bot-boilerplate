@@ -12,6 +12,7 @@ To run it just rename .env.example to .env and fill out the fields.
     - Filter PR
     - Search for open / closed / all PR
 - Quick Links to Github Docs
+- Subscribe to updates to Issues / Pull Requests
 
 Example:
 
