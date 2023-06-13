@@ -2,6 +2,12 @@
 
 To run it just rename .env.example to .env and fill out the fields.
 
+The discord Bot can be created here: https://discord.com/developers/applications
+
+The Bot needs the Guild Members intent on the discord developers page
+The bot needs only basic read / write permissions on the server.
+
+
 # Features:
 
 - See details about an Issue/Pull Request
