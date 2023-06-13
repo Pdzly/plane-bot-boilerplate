@@ -399,12 +399,12 @@ export class GithubCommands {
     interaction: CommandInteraction
   ): Promise<void> {
     await interaction.deferReply({ ephemeral: true });
-    if (
-      !(await this.userSubscriptionService.getUserSubscription(
-        interaction.user.id,
-        id
-      ))
-    ) {
+    const subscription = await this.userSubscriptionService.getUserSubscription(
+      interaction.user.id,
+      id
+    );
+    console.log(subscription);
+    if (!subscription) {
       await this.userSubscriptionService.addUserSubscription(
         interaction.user.id,
         id
@@ -435,12 +435,11 @@ export class GithubCommands {
     interaction: CommandInteraction
   ): Promise<void> {
     await interaction.deferReply({ ephemeral: true });
-    if (
-      await this.userSubscriptionService.getUserSubscription(
-        interaction.user.id,
-        id
-      )
-    ) {
+    const subscription = await this.userSubscriptionService.getUserSubscription(
+      interaction.user.id,
+      id
+    );
+    if (!subscription) {
       await this.userSubscriptionService.unsubscribeUser(
         interaction.user.id,
         id

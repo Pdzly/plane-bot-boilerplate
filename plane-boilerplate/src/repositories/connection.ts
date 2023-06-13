@@ -1,5 +1,6 @@
 import { DataSource } from "typeorm"
 import UserSubscription from "../models/userSubscription.js";
+import ServerSettings from "../models/serverSettings.js";
 
 const connection = new DataSource({
     type: "mongodb",
@@ -8,7 +9,7 @@ const connection = new DataSource({
     database: process.env.MONGODB_DB || "plane_bot",
     username: process.env.MONGODB_USERNAME,
     password: process.env.MONGODB_PASSWORD,
-    entities: [UserSubscription],
+    entities: [UserSubscription, ServerSettings],
 })
 
 export default connection;

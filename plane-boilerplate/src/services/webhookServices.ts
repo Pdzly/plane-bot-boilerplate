@@ -44,7 +44,12 @@ export default class webhookServices {
     this.webhooks.on("issues.opened", async (ev) => {
       try {
         const embed = new EmbedBuilder();
-        embed.setTitle("New Issue: " + ev.payload.issue.title);
+        embed.setTitle(
+          "New Issue: " +
+            ev.payload.issue.title +
+            " #" +
+            ev.payload.issue.number
+        );
         embed.setURL(ev.payload.issue.html_url);
         embed.setAuthor({
           name: ev.payload.sender.login,
@@ -168,7 +173,12 @@ export default class webhookServices {
           console.error(e);
         }
         const embed = new EmbedBuilder();
-        embed.setTitle("Comment to " + ev.payload.issue.title);
+        embed.setTitle(
+          "Comment to " +
+            ev.payload.issue.title +
+            " #" +
+            ev.payload.issue.number
+        );
         embed.setURL(ev.payload.issue.html_url);
 
         embed.setAuthor({
@@ -367,30 +377,38 @@ export default class webhookServices {
   }
 
   async addUserSubscription(userId: string, issue: number) {
-    return await this.userSubscriptionRepository.createUserSubscription(
-      userId,
-      Number(issue)
-    );
+    const subscription = this.userSubscriptionRepository.create();
+    subscription.issueId = Number(issue);
+    subscription.userId = userId;
+    return await this.userSubscriptionRepository.save(subscription);
   }
 
   async unsubscribeUser(userId: string, issue: number) {
-    return await this.userSubscriptionRepository.deleteUserSubscription(
-      userId,
-      Number(issue)
-    );
+    const subscription = await this.userSubscriptionRepository.findOne({
+      where: {
+        userId: userId,
+        issueId: Number(issue),
+      },
+    });
+    if (!subscription) return;
+    return await this.userSubscriptionRepository.delete(subscription);
   }
 
   async getUserSubscription(user: string, issue: number) {
-    return await this.userSubscriptionRepository.getUserSubscription(
-      user,
-      Number(issue)
-    );
+    return await this.userSubscriptionRepository.findOne({
+      where: {
+        userId: user,
+        issueId: Number(issue),
+      },
+    });
   }
 
   async getUsersForIssue(issue: number) {
-    return await this.userSubscriptionRepository.getUserSubscriptionByIssueId(
-      Number(issue)
-    );
+    return await this.userSubscriptionRepository.find({
+      where: {
+        issueId: Number(issue),
+      },
+    });
   }
 
   async handleIssueSubscription(
