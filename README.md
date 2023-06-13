@@ -7,6 +7,7 @@ The discord Bot can be created here: https://discord.com/developers/applications
 The Bot needs the Guild Members intent on the discord developers page
 The bot needs only basic read / write permissions on the server.
 
+The webhook needs Issues, Issue comments and Pull Requests ticked to function correectly ( or just "Send everything" )
 
 # Features:
 
