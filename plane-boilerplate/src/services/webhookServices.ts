@@ -83,7 +83,14 @@ export default class webhookServices {
         if (channel?.archived && channel.unarchivable) {
           await channel.setArchived(false);
         }
-        await channel?.send({ embeds: [embed] });
+        const goto = new ButtonBuilder()
+          .setLabel("Goto Issue")
+          .setStyle(ButtonStyle.Link)
+          .setURL(ev.payload.issue.html_url);
+
+        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(goto);
+
+        await channel?.send({ embeds: [embed], components: [row] });
       } catch (e) {
         console.error(e);
       }
@@ -132,7 +139,14 @@ export default class webhookServices {
         if (channel?.archived && channel.unarchivable) {
           await channel.setArchived(false);
         }
-        await channel?.send({ embeds: [embed] });
+        const goto = new ButtonBuilder()
+          .setLabel("Goto Issue")
+          .setStyle(ButtonStyle.Link)
+          .setURL(ev.payload.issue.html_url);
+
+        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(goto);
+
+        await channel?.send({ embeds: [embed], components: [row] });
       } catch (e) {
         console.error(e);
       }
@@ -207,7 +221,16 @@ export default class webhookServices {
         if (channel.archived && channel.unarchivable) {
           await channel.setArchived(false);
         }
-        await channel.send({ embeds: [embed] });
+        const goto = new ButtonBuilder()
+          .setLabel("Goto Issue")
+          .setStyle(ButtonStyle.Link)
+          .setURL(ev.payload.issue.html_url);
+        if (ev.payload.issue.pull_request !== undefined) {
+          goto.setLabel("Goto Pull Request");
+        }
+        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(goto);
+
+        await channel.send({ embeds: [embed], components: [row] });
       } catch (e) {
         console.error(e);
       }
@@ -253,7 +276,15 @@ export default class webhookServices {
         if (channel?.archived && channel.unarchivable) {
           await channel.setArchived(false);
         }
-        await channel?.send({ embeds: [embed] });
+
+        const goto = new ButtonBuilder()
+          .setLabel("Goto Pull Request")
+          .setStyle(ButtonStyle.Link)
+          .setURL(ev.payload.pull_request.html_url);
+
+        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(goto);
+
+        await channel?.send({ embeds: [embed], components: [row] });
       } catch (e) {
         console.error(e);
       }
@@ -302,7 +333,15 @@ export default class webhookServices {
         if (channel?.archived && channel.unarchivable) {
           await channel.setArchived(false);
         }
-        await channel?.send({ embeds: [embed] });
+
+        const goto = new ButtonBuilder()
+          .setLabel("Goto Pull Request")
+          .setStyle(ButtonStyle.Link)
+          .setURL(ev.payload.pull_request.html_url);
+
+        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(goto);
+
+        await channel?.send({ embeds: [embed], components: [row] });
       } catch (e) {
         console.error(e);
       }
@@ -405,11 +444,11 @@ export default class webhookServices {
       .setCustomId(`unsubscribe-${issue.payload.issue.number}`)
       .setLabel("Unsubscribe")
       .setStyle(ButtonStyle.Secondary);
-      
+
     const goto = new ButtonBuilder()
-    .setLabel("Goto Issue")
-    .setStyle(ButtonStyle.Link)
-    .setURL(issue.payload.issue.html_url);
+      .setLabel("Goto Issue")
+      .setStyle(ButtonStyle.Link)
+      .setURL(issue.payload.issue.html_url);
 
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
       goto,
