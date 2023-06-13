@@ -405,7 +405,14 @@ export default class webhookServices {
       .setCustomId(`unsubscribe-${issue.payload.issue.number}`)
       .setLabel("Unsubscribe")
       .setStyle(ButtonStyle.Secondary);
+      
+    const goto = new ButtonBuilder()
+    .setLabel("Goto Issue")
+    .setStyle(ButtonStyle.Link)
+    .setURL(issue.payload.issue.html_url);
+
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      goto,
       unsubscribeButton
     );
 
@@ -474,7 +481,14 @@ export default class webhookServices {
       .setCustomId(`unsubscribe-${pull_request.payload.pull_request.number}`)
       .setLabel("Unsubscribe")
       .setStyle(ButtonStyle.Secondary);
+
+    const goto = new ButtonBuilder()
+      .setLabel("Goto Pull Request")
+      .setStyle(ButtonStyle.Link)
+      .setURL(pull_request.payload.pull_request.html_url);
+
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      goto,
       unsubscribeButton
     );
 
