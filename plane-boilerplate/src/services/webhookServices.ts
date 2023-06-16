@@ -392,7 +392,7 @@ export default class webhookServices {
             id: webhookEvent["x-request-id"],
             name: webhookEvent["x-github-event"],
             signature: webhookEvent["x-hub-signature"],
-            payload: webhookEvent.body,
+            payload: JSON.stringify(webhookEvent.body),
           })
           .catch(console.error);
       };
