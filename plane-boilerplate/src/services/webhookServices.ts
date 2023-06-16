@@ -106,15 +106,19 @@ export default class webhookServices {
     this.webhooks.on("issues.closed", async (ev) => {
       try {
         try {
-          if (ev.payload.issue.pull_request !== undefined) {
-            this.getUsersForIssue(ev.payload.issue.number).then((x) =>
-              this.handlePullRequestSubscription(x, ev, true)
-            );
-          } else {
-            this.getUsersForIssue(ev.payload.issue.number).then((x) =>
-              this.handleIssueSubscription(x, ev, true)
-            );
-          }
+          this.getUsersForIssue(ev.payload.issue.number).then((x) =>
+            this.handleIssueSubscription(
+              x,
+              {
+                title: ev.payload.issue.title,
+                number: ev.payload.issue.number,
+                url: ev.payload.issue.html_url,
+                comment: { body: ev.payload.issue.body },
+                sender: ev.payload.sender,
+              },
+              true
+            )
+          );
         } catch (e) {
           console.error(e);
         }
@@ -162,15 +166,25 @@ export default class webhookServices {
     this.webhooks.on("issue_comment.created", async (ev) => {
       try {
         try {
-          if (ev.payload.issue.pull_request !== undefined) {
-            this.getUsersForIssue(ev.payload.issue.number).then((x) =>
-              this.handlePullRequestSubscription(x, ev)
-            );
-          } else {
-            this.getUsersForIssue(ev.payload.issue.number).then((x) =>
-              this.handleIssueSubscription(x, ev)
-            );
-          }
+          this.getUsersForIssue(ev.payload.issue.number).then((x) => {
+            if (ev.payload.issue.pull_request) {
+              this.handlePullRequestSubscription(x, {
+                title: ev.payload.issue.title,
+                number: ev.payload.issue.number,
+                url: ev.payload.issue.html_url,
+                comment: { body: ev.payload.comment.body },
+                sender: ev.payload.sender,
+              });
+            } else {
+              this.handleIssueSubscription(x, {
+                title: ev.payload.issue.title,
+                number: ev.payload.issue.number,
+                url: ev.payload.issue.html_url,
+                comment: { body: ev.payload.comment.body },
+                sender: ev.payload.sender,
+              });
+            }
+          });
         } catch (e) {
           console.error(e);
         }
@@ -305,7 +319,17 @@ export default class webhookServices {
     this.webhooks.on("pull_request.closed", async (ev) => {
       try {
         this.getUsersForIssue(ev.payload.pull_request.number).then((x) =>
-          this.handlePullRequestSubscription(x, ev, true)
+          this.handlePullRequestSubscription(
+            x,
+            {
+              title: ev.payload.pull_request.title,
+              url: ev.payload.pull_request.html_url,
+              comment: { body: ev.payload.pull_request.body },
+              number: ev.payload.pull_request.number,
+              sender: ev.payload.sender,
+            },
+            true
+          )
         );
 
         const embed = new EmbedBuilder();
@@ -420,60 +444,61 @@ export default class webhookServices {
 
   async handleIssueSubscription(
     payload: UserSubscription[],
-    issue: any,
+    issue: {
+      title: string;
+      number: number;
+      url: string;
+      sender: { login: string; avatar_url: string; html_url: string };
+      comment: { body: string | undefined | null };
+    },
     closed?: boolean
   ) {
     const dmEmbed = new EmbedBuilder();
     if (closed) {
       dmEmbed.setTitle(
         "Closed: " +
-          (issue.payload.issue.title.length > 220
-            ? issue.payload.issue.title.substring(0, 220) + "..."
-            : issue.payload.issue.title) +
+          (issue.title.length > 220
+            ? issue.title.substring(0, 220) + "..."
+            : issue.title) +
           " #" +
-          issue.payload.issue.number
+          issue.number
       );
       dmEmbed.setDescription(
-        issue.payload.issue.title +
-          " was closed by " +
-          issue.payload.sender.login +
-          "."
+        issue.title + " was closed by " + issue.sender.login + "."
       );
     } else {
-      issue.payload.comment.body = githubService.cleanseIssueBody(
-        issue.payload.comment.body
-      );
+      issue.comment.body = githubService.cleanseIssueBody(issue.comment.body);
 
       dmEmbed.setTitle(
         "New Comment to " +
-          (issue.payload.issue.title.length > 220
-            ? issue.payload.issue.title.substring(0, 220) + "..."
-            : issue.payload.issue.title) +
+          (issue.title.length > 220
+            ? issue.title.substring(0, 220) + "..."
+            : issue.title) +
           " #" +
-          issue.payload.issue.number
+          issue.number
       );
       dmEmbed.setDescription(
-        (issue.payload.comment.body?.length || 0) > 4096
-          ? issue.payload.comment.body?.substring(0, 4092) + "..."
-          : issue.payload.comment.body
+        ((issue.comment.body?.length || 0) > 4096
+          ? issue.comment.body?.substring(0, 4092) + "..."
+          : issue.comment.body) || ""
       );
     }
-    dmEmbed.setURL(issue.payload.issue.html_url);
+    dmEmbed.setURL(issue.url);
     dmEmbed.setAuthor({
-      name: issue.payload.sender.login,
-      iconURL: issue.payload.sender.avatar_url,
-      url: issue.payload.sender.html_url,
+      name: issue.sender.login,
+      iconURL: issue.sender.avatar_url,
+      url: issue.sender.html_url,
     });
 
     const unsubscribeButton = new ButtonBuilder()
-      .setCustomId(`unsubscribe-${issue.payload.issue.number}`)
+      .setCustomId(`unsubscribe-${issue.number}`)
       .setLabel("Unsubscribe")
       .setStyle(ButtonStyle.Secondary);
 
     const goto = new ButtonBuilder()
       .setLabel("Goto Issue")
       .setStyle(ButtonStyle.Link)
-      .setURL(issue.payload.issue.html_url);
+      .setURL(issue.url);
 
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
       goto,
@@ -492,66 +517,69 @@ export default class webhookServices {
         components: [row],
       });
       if (closed && userData.settings.deleteOnClose) {
-        await this.unsubscribeUser(userData.userId, issue.payload.issue.number);
+        await this.unsubscribeUser(userData.userId, issue.number);
       }
     });
   }
 
   async handlePullRequestSubscription(
     payload: UserSubscription[],
-    pull_request: any,
+    pull_request: {
+      title: string;
+      number: number;
+      url: string;
+      sender: { login: string; avatar_url: string; html_url: string };
+      comment: { body: string | undefined | null };
+    },
     closed?: boolean
   ) {
     const dmEmbed = new EmbedBuilder();
     if (closed) {
       dmEmbed.setTitle(
         "Closed: " +
-          (pull_request.payload.pull_request.title.length > 220
-            ? pull_request.payload.pull_request.title.substring(0, 220) + "..."
-            : pull_request.payload.pull_request.title) +
+          (pull_request.title.length > 220
+            ? pull_request.title.substring(0, 220) + "..."
+            : pull_request.title) +
           " #" +
-          pull_request.payload.pull_request.number
+          pull_request.number
       );
       dmEmbed.setDescription(
-        pull_request.payload.pull_request.title +
-          " was closed by " +
-          pull_request.payload.sender.login +
-          "."
+        pull_request.title + " was closed by " + pull_request.sender.login + "."
       );
     } else {
-      pull_request.payload.comment.body = githubService.cleanseIssueBody(
-        pull_request.payload.comment.body
+      pull_request.comment.body = githubService.cleanseIssueBody(
+        pull_request.comment.body
       );
       dmEmbed.setTitle(
         "New Comment to " +
-          (pull_request.payload.pull_request.title.length > 220
-            ? pull_request.payload.pull_request.title.substring(0, 220) + "..."
-            : pull_request.payload.pull_request.title) +
+          (pull_request.title.length > 220
+            ? pull_request.title.substring(0, 220) + "..."
+            : pull_request.title) +
           " #" +
-          pull_request.payload.pull_request.number
+          pull_request.number
       );
       dmEmbed.setDescription(
-        (pull_request.payload.comment.body?.length || 0) > 4096
-          ? pull_request.payload.comment.body?.substring(0, 4092) + "..."
-          : pull_request.payload.comment.body
+        ((pull_request.comment.body?.length || 0) > 4096
+          ? pull_request.comment.body?.substring(0, 4092) + "..."
+          : pull_request.comment.body) || ""
       );
     }
-    dmEmbed.setURL(pull_request.payload.pull_request.html_url);
+    dmEmbed.setURL(pull_request.url);
     dmEmbed.setAuthor({
-      name: pull_request.payload.sender.login,
-      iconURL: pull_request.payload.sender.avatar_url,
-      url: pull_request.payload.sender.html_url,
+      name: pull_request.sender.login,
+      iconURL: pull_request.sender.avatar_url,
+      url: pull_request.sender.html_url,
     });
 
     const unsubscribeButton = new ButtonBuilder()
-      .setCustomId(`unsubscribe-${pull_request.payload.pull_request.number}`)
+      .setCustomId(`unsubscribe-${pull_request.number}`)
       .setLabel("Unsubscribe")
       .setStyle(ButtonStyle.Secondary);
 
     const goto = new ButtonBuilder()
       .setLabel("Goto Pull Request")
       .setStyle(ButtonStyle.Link)
-      .setURL(pull_request.payload.pull_request.html_url);
+      .setURL(pull_request.url);
 
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
       goto,
@@ -571,10 +599,7 @@ export default class webhookServices {
       });
 
       if (closed && userData.settings.deleteOnClose) {
-        await this.unsubscribeUser(
-          userData.userId,
-          pull_request.payload.pull_request.number
-        );
+        await this.unsubscribeUser(userData.userId, pull_request.number);
       }
     });
   }
