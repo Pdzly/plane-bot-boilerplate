@@ -14,7 +14,9 @@ import {
 import { bot } from "../main.js";
 import UserSubscriptionRepository from "../repositories/userSubscriptionRepository.js";
 import { Inject, Service } from "typedi";
-import UserSubscription from "../models/userSubscription.js";
+import UserSubscription, {
+  UserSubscriptionSettings,
+} from "../models/userSubscription.js";
 import githubService from "./githubService.js";
 
 @Service()
@@ -376,10 +378,15 @@ export default class webhookServices {
       .listen(process.env.WEBHOOK_PORT || 3030);
   }
 
-  async addUserSubscription(userId: string, issue: number) {
+  async addUserSubscription(
+    userId: string,
+    issue: number,
+    options: UserSubscriptionSettings
+  ) {
     const subscription = this.userSubscriptionRepository.create();
     subscription.issueId = Number(issue);
     subscription.userId = userId;
+    subscription.settings = options;
     return await this.userSubscriptionRepository.save(subscription);
   }
 
@@ -473,18 +480,20 @@ export default class webhookServices {
       unsubscribeButton
     );
 
-    payload.forEach(async (user) => {
-      bot.users.fetch(user.userId).then(async (user) => {
-        let channel = user.dmChannel;
-        if (!channel) {
-          channel = await user.createDM(false);
-        }
+    payload.forEach(async (userData) => {
+      const user = await bot.users.fetch(userData.userId);
+      let channel = user.dmChannel;
+      if (!channel) {
+        channel = await user.createDM(false);
+      }
 
-        channel.send({
-          embeds: [dmEmbed],
-          components: [row],
-        });
+      channel.send({
+        embeds: [dmEmbed],
+        components: [row],
       });
+      if (closed && userData.settings.deleteOnClose) {
+        await this.unsubscribeUser(userData.userId, issue.payload.issue.number);
+      }
     });
   }
 
@@ -549,18 +558,24 @@ export default class webhookServices {
       unsubscribeButton
     );
 
-    payload.forEach(async (user) => {
-      bot.users.fetch(user.userId).then(async (user) => {
-        let channel = user.dmChannel;
-        if (!channel) {
-          channel = await user.createDM(false);
-        }
+    payload.forEach(async (userData) => {
+      const user = await bot.users.fetch(userData.userId);
+      let channel = user.dmChannel;
+      if (!channel) {
+        channel = await user.createDM(false);
+      }
 
-        channel.send({
-          embeds: [dmEmbed],
-          components: [row],
-        });
+      channel.send({
+        embeds: [dmEmbed],
+        components: [row],
       });
+
+      if (closed && userData.settings.deleteOnClose) {
+        await this.unsubscribeUser(
+          userData.userId,
+          pull_request.payload.pull_request.number
+        );
+      }
     });
   }
 }

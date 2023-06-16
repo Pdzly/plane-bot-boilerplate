@@ -396,6 +396,13 @@ export class GithubCommands {
       required: true,
     })
     id: number,
+    @SlashOption({
+      description: "Unsubscribe when the issue or pull request is closed",
+      name: "unsubonclose",
+      type: ApplicationCommandOptionType.Boolean,
+      required: false,
+    })
+    unsubOnClose: boolean | undefined,
     interaction: CommandInteraction
   ): Promise<void> {
     await interaction.deferReply({ ephemeral: true });
@@ -403,11 +410,11 @@ export class GithubCommands {
       interaction.user.id,
       id
     );
-    console.log(subscription);
     if (!subscription) {
       await this.userSubscriptionService.addUserSubscription(
         interaction.user.id,
-        id
+        id,
+        {deleteOnClose: unsubOnClose}
       );
       interaction.editReply(
         "Successfully subscribed to the issue/pull request #" + id
