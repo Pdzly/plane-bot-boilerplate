@@ -19,7 +19,7 @@ export class setupCommands {
 
   @Slash({
     name: "setauthrole",
-    description: "Link the Verification Role for new users",
+    description: "Link the Verification Role for new users ( the role should be below the bot )",
   })
   async role(
     @SlashOption({
@@ -42,7 +42,7 @@ export class setupCommands {
 
       await interaction.editReply(`Role successfully set!
 Please Note: This will not retroactively give the role to users that already accepted the rules.
-You can use \`/patchroles\` to give the role to everyone that accepted the rules. The role should be under the Bots role.`);
+You can use \`/patchroles\` to give the role to everyone that accepted the rules.`);
     } catch (exc) {
       console.error(exc);
       await interaction.editReply("Something went wrong.");
@@ -90,7 +90,6 @@ You can use \`/patchroles\` to give the role to everyone that accepted the rules
 
   @On({event: "guildMemberUpdate"})
   async onGuildMemberUpdate([oldMember, newMember]: ArgsOf<"guildMemberUpdate">) {
-    console.log("guildMemberUpdate");
     const foundRoleId = await this.serverSettingsService.getAuthRole(
       newMember.guild.id
     );
@@ -102,6 +101,7 @@ You can use \`/patchroles\` to give the role to everyone that accepted the rules
       return;
     }
     if (!newMember.roles.cache.has(foundRoleId) && oldMember.pending && !newMember.pending) {
+      console.log("Adding role to " + newMember.user.username);
       try{
         await newMember.roles.add(foundRole);
       }catch(exc){
